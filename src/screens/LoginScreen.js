@@ -7,7 +7,7 @@ const LoginScreen = ({ navigation }) => {
 
     const handleLogin = () => {
         if (username.trim() !== '') {
-            navigation.navigate('Game', { username });
+            navigation.navigate('Start', { username });
         }
     };
 

@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, FlatList } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Modal, Pressable } from 'react-native';
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -43,9 +46,15 @@ const imagePairs = [
 
 const GameScreen = () => {
 
+    const [modalVisible, setModalVisible] = useState(false);
+    const [intervalId, setIntervalId] = useState(null);
+
     const [cards, setCards] = useState([]);
     const [selectedCards, setSelectedCards] = useState([]);
     const [matchedPairs, setMatchedPairs] = useState([]);
+
+    const [timer, setTimer] = useState(0);
+    const timerRef = useRef(null);
 
     useEffect(() => {
 
@@ -56,7 +65,20 @@ const GameScreen = () => {
             });
 
         shuffleCards();
+        startTimer();
+        return stopTimer;
     }, []);
+
+    // ⏱️ Start i stop funkcije za štopericu
+    const startTimer = () => {
+        timerRef.current = setInterval(() => {
+            setTimer((prev) => prev + 10);
+        }, 10);
+    };
+
+    const stopTimer = () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+    };
 
     const shuffleCards = () => {
 
@@ -64,6 +86,23 @@ const GameScreen = () => {
         setCards(shuffled);
 
     };
+
+    useEffect(() => {
+        if (matchedPairs.length === imagePairs.length / 2) {
+            clearInterval(intervalId);
+            AsyncStorage.setItem('previousResult', timer.toString());
+            checkBestResult();
+            setModalVisible(true);
+        }
+    }, [matchedPairs]);
+
+    const checkBestResult = async () => {
+        const best = await AsyncStorage.getItem('bestResult');
+        if (!best || timer < parseInt(best)) {
+            await AsyncStorage.setItem('bestResult', timer.toString());
+        }
+    };
+
 
     const handleCardPress = (card) => {
         if (
@@ -82,12 +121,26 @@ const GameScreen = () => {
                 newSelected[0].pairId === newSelected[1].pairId &&
                 newSelected[0].type !== newSelected[1].type
             ) {
-                setMatchedPairs([...matchedPairs, newSelected[0].pairId]);
-                setTimeout(() => setSelectedCards([]), 1000);
-            } else {
-                setTimeout(() => setSelectedCards([]), 1000);
-            }
+                const newMatchedPairs = [...matchedPairs, newSelected[0].pairId];
+                setMatchedPairs(newMatchedPairs);
+                setTimeout(() => setSelectedCards([]), 800);
 
+                // ✅ Provjeri kraj igre
+                if (newMatchedPairs.length === imagePairs.length / 2) {
+                    stopTimer();
+                    saveResult(timer);
+                }
+            } else {
+                setTimeout(() => setSelectedCards([]), 800);
+            }
+        }
+    };
+
+    const saveResult = async (finalTime) => {
+        await AsyncStorage.setItem('previousResult', finalTime.toString());
+        const best = await AsyncStorage.getItem('bestResult');
+        if (!best || finalTime < parseInt(best)) {
+            await AsyncStorage.setItem('bestResult', finalTime.toString());
         }
 
     };
@@ -116,11 +169,18 @@ const GameScreen = () => {
                 )}
             </TouchableOpacity>
         );
+    };
 
+    const formatTime = (ms) => {
+        const sec = Math.floor(ms / 1000);
+        const cent = Math.floor((ms % 1000) / 10);
+        return `${sec}.${cent < 10 ? '0' : ''}${cent}`;
     };
 
     return (
         <View style={styles.container}>
+            <Text style={styles.timerText}>⏱️ Vrijeme: {formatTime(timer)} s</Text>
+
             <FlatList
                 data={cards}
                 renderItem={renderCard}
@@ -134,6 +194,54 @@ const GameScreen = () => {
                 }}
             />
 
+            <Modal
+                transparent={true}
+                animationType="slide"
+                visible={modalVisible}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={[styles.text, { marginBottom: 30 }]}>
+                            Tvoj rezultat: {formatTime(timer)}
+                        </Text>
+
+                        <Pressable
+                            onPress={() => {
+                                setModalVisible(false);
+                                shuffleCards();
+                                setMatchedPairs([]);
+                                setSelectedCards([]);
+                                setTimer(0);
+                                const id = setInterval(() => setTimer(prev => prev + 10), 10);
+                                setIntervalId(id);
+                            }}
+                            style={({ pressed }) => [
+                                styles.modalButton,
+                                { marginBottom: 20 },
+                                pressed && { opacity: 0.6 },
+                            ]}
+                        >
+                            <Text>Pokušaj ponovno</Text>
+                        </Pressable>
+
+                        <Pressable
+                            onPress={() => {
+                                setModalVisible(false);
+                                // navigation.navigate('Leaderboard');
+                            }}
+                            style={({ pressed }) => [
+                                styles.modalButton,
+                                pressed && { opacity: 0.6 },
+                            ]}
+                        >
+                            <Text>Rang lista</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+
+
+
 
         </View>
     );
@@ -146,8 +254,13 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: '#f0f0f0',
     },
-
-
+    timerText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10,
+        color: '#2c3e50',
+    },
     card: {
         margin: CARD_MARGIN,
         borderRadius: 8,
@@ -162,7 +275,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 3,
     },
-
 
     cardBack: {
         backgroundColor: '#42515a',
@@ -181,7 +293,33 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#333',
-    }
+    },
+
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 30,
+        borderRadius: 10,
+        alignItems: 'center',
+        width: '80%',
+    },
+
+    modalButton: {
+        fontSize: 18,
+        color: 'blue',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: '#42515a',
+        textAlign: 'center',
+    },
 
 });
 
