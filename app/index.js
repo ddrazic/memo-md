@@ -23,7 +23,7 @@ import { app, db } from '../firebase'; // PRILAGODI OVU PUTANJU AKO JE POTREBNO
 const auth = getAuth(app);
 
 // Preimenovana komponenta iz LoginScreen u App
-const App = () => { // Komponenta sada nazvana App
+const LoginScreen = () => { // Komponenta sada nazvana App
     const navigation = useNavigation();
 
     // Stanja za polja obrasca za prijavu/registraciju
@@ -202,72 +202,81 @@ const App = () => { // Komponenta sada nazvana App
 };
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f8f8f8', // Svijetla pozadina
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 30,
-        fontFamily: 'monospace', // Zadržavanje originalnog fonta
-    },
-    input: {
-        width: '85%', // Responzivna širina
-        height: 50,
-        borderColor: '#ddd', // Svjetliji obrub
-        borderWidth: 1,
-        marginBottom: 15,
-        paddingHorizontal: 15,
-        borderRadius: 10, // Zaobljeniji kutovi
-        backgroundColor: '#fff',
-        fontSize: 16,
-        color: '#333',
-    },
-    button: {
-        width: '85%',
-        height: 50,
-        backgroundColor: '#007bff', // Lijepa plava boja
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 10,
-        marginTop: 10,
-        shadowColor: '#000', // Dodaj sjenu za dubinu
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 5, // Za Android sjenu
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    errorText: {
-        color: '#dc3545', // Crvena za pogreške
-        marginBottom: 15,
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    toggleContainer: {
-        flexDirection: 'row',
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    toggleText: {
-        fontSize: 16,
-        color: '#555',
-    },
-    toggleButtonText: {
-        fontSize: 16,
-        color: '#007bff',
-        fontWeight: 'bold',
-        marginLeft: 5,
-    },
+  container: {
+    padding: 20,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e6f0ed', // Vrlo svijetla pastelno plavo-zelena pozadina (blizu #b8e0d2)
+  },
+  title: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#4a8a79', // Tamnija varijacija #b8e0d2
+    marginBottom: 40,
+    fontFamily: 'monospace',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0,0,0,0.1)', // Vrlo blaga sjena
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
+    textAlign: 'center',
+  },
+  input: {
+    width: '85%',
+    height: 50,
+    borderColor: '#4a8a79', // Tamnija varijacija #b8e0d2
+    borderWidth: 2,
+    marginBottom: 20,
+    paddingHorizontal: 15,
+    borderRadius: 0,
+    backgroundColor: '#ffffff', // Čista bijela pozadina inputa
+    fontSize: 16,
+    color: '#4a8a79', // Tamnija varijacija #b8e0d2
+    fontFamily: 'monospace',
+  },
+  button: {
+    width: '85%',
+    height: 50,
+    borderColor: '#4a8a79', // Tamnija varijacija #b8e0d2
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+    marginTop: 15,
+    backgroundColor: 'transparent',
+  },
+  buttonText: {
+    color: '#4a8a79', // Tamnija varijacija #b8e0d2
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    letterSpacing: 1,
+  },
+  errorText: {
+    color: '#e57373', // Pastelno crvena za pogreške
+    marginBottom: 15,
+    fontSize: 14,
+    textAlign: 'center',
+    fontFamily: 'monospace',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  toggleText: {
+    fontSize: 16,
+    color: '#757575', // Srednje siva
+    fontFamily: 'monospace',
+  },
+  toggleButtonText: {
+    fontSize: 16,
+    color: '#42a5f5', // Mekana plava za link
+    fontWeight: 'bold',
+    marginLeft: 5,
+    fontFamily: 'monospace',
+    textDecorationLine: 'underline',
+  },
 });
 
-export default App; // Sada izvozi App kao default
+export default LoginScreen; // Sada izvozi App kao default

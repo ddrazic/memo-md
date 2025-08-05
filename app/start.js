@@ -51,18 +51,20 @@ const StartScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Najbolji rezultat: {formatTime(best)}</Text>
+            <Text style={styles.title}>MEMO</Text> {/* Dodan naslov za konzistentnost */}
+            <Text style={styles.text}>Najbolji rezultat:</Text>
+            <Text style={styles.resultText}>{formatTime(best)}</Text>
 
             <TouchableOpacity style={styles.button} onPress={handleStart}>
                 <Text style={styles.buttonText}>START</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button} onPress={handleLeaderboard}>
-                <Text style={styles.buttonText}>Rang lista</Text>
+                <Text style={styles.buttonText}>RANG LISTA</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-                <Text style={styles.buttonText}>Odjava</Text>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}> {/* Koristi samo logoutButton stil */}
+                <Text style={styles.logoutButtonText}>ODJAVA</Text> {/* Koristi logoutButtonText stil */}
             </TouchableOpacity>
         </View>
     );
@@ -80,38 +82,74 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#f8f8f8', // Dodana pozadina za konzistentnost
+        padding: 20,
+        backgroundColor: '#e6f0ed', // Vrlo svijetla pastelno plavo-zelena pozadina (blizu #b8e0d2)
+    },
+    title: {
+        fontSize: 40,
+        fontWeight: 'bold',
+        color: '#4a8a79', // Tamnija varijacija #b8e0d2
+        marginBottom: 40,
+        fontFamily: 'monospace',
+        letterSpacing: 2,
+        textShadowColor: 'rgba(0,0,0,0.1)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 1,
+        textAlign: 'center',
     },
     text: {
-        fontSize: 24,
+        fontSize: 22,
         textAlign: 'center',
-        marginBottom: 20, // Povećan razmak
+        marginBottom: 5,
         fontFamily: 'monospace',
-        color: '#333',
+        color: '#757575', // Srednje siva
+    },
+    resultText: {
+        fontSize: 36, // Povećan font za isticanje
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 50, // Povećan razmak ispod rezultata
+        fontFamily: 'monospace',
+        color: '#2e5c4d', // Još tamnija varijacija zelene za isticanje
     },
     button: {
-        width: '70%', // Malo širi gumbi
-        height: 50,
-        backgroundColor: '#007bff',
+        width: '70%',
+        height: 55,
+        borderColor: '#4a8a79', // Tamnija varijacija #b8e0d2
+        borderWidth: 2,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 10,
-        marginTop: 15, // Razmak između gumba
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 5,
+        borderRadius: 0,
+        marginTop: 15,
+        backgroundColor: 'transparent',
+        elevation: 0,
+        shadowColor: 'transparent',
     },
     buttonText: {
-        color: 'white',
-        fontSize: 18,
+        color: '#4a8a79', // Tamnija varijacija #b8e0d2
+        fontSize: 20,
         fontWeight: 'bold',
+        fontFamily: 'monospace',
+        letterSpacing: 1,
     },
-    logoutButton: {
-        backgroundColor: '#dc3545', // Crvena boja za gumb za odjavu
-        marginTop: 30, // Veći razmak za gumb za odjavu
+    logoutButton: { // Novi stil za gumb za odjavu
+        width: '50%', // Manja širina
+        height: 40, // Manja visina
+        backgroundColor: '#dcebe8', // Svjetlija pozadina (blizu pozadine ekrana)
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 0,
+        marginTop: 60, // Povećan razmak za spuštanje
+        borderWidth: 0, // Bez okvira
+        elevation: 0,
+        shadowColor: 'transparent',
+    },
+    logoutButtonText: { // Novi stil teksta za gumb za odjavu
+        color: '#4a8a79', // Tamnija varijacija #b8e0d2 (isti kao ostali gumbi za dosljednost)
+        fontSize: 16, // Manji font
+        fontWeight: 'bold',
+        fontFamily: 'monospace',
+        letterSpacing: 1,
     },
 });
 

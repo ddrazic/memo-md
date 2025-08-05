@@ -218,7 +218,7 @@ const GameScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.timerText}>⏱️ Vrijeme: {formatTime(timer)} s</Text>
+            <Text style={styles.timerText}>{formatTime(timer)} s</Text>
 
             <FlatList
                 data={cards}
@@ -285,74 +285,87 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#e6f0ed', // Vrlo svijetla pastelno plavo-zelena pozadina (blizu #b8e0d2)
     },
     timerText: {
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 10,
-        color: '#2c3e50',
+        color: '#4a8a79', // Tamnija varijacija #b8e0d2
+        fontFamily: 'monospace',
+    },
+    cardListContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     card: {
         margin: CARD_MARGIN,
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#42515a',
+        borderRadius: 0, // Oštri kutovi
+        backgroundColor: '#ffffff', // Bijela pozadina kartice
+        borderWidth: 2, // Deblji obrub
+        borderColor: '#4a8a79', // Tamnija varijacija #b8e0d2
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
+        elevation: 0, // Uklonjena sjena
+        shadowColor: 'transparent', // Uklonjena sjena
     },
     cardBack: {
-        backgroundColor: '#42515a',
+        backgroundColor: '#86b3a2', // Svjetlija varijacija #b8e0d2 za poleđinu
         width: '100%',
         height: '100%',
-        borderRadius: 8,
+        borderRadius: 0,
     },
     image: {
         width: '80%',
         height: '80%',
         resizeMode: 'contain',
     },
-    text: {
-        fontSize: 16,
+    cardText: {
+        fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: '#4a8a79', // Tamnija varijacija #b8e0d2
+        fontFamily: 'monospace',
+        textAlign: 'center',
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Tamnija pozadina modala
     },
     modalContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffff',
         padding: 30,
-        borderRadius: 10,
+        borderRadius: 0, // Oštri kutovi
+        borderWidth: 2, // Okvir
+        borderColor: '#4a8a79', // Tamnija varijacija #b8e0d2
         alignItems: 'center',
-        width: '80%',
+        width: '85%',
+    },
+    modalResultText: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#1e4034', // Još tamnija, gotovo crna zelena (kao istaknuti rezultat na StartScreenu)
+        fontFamily: 'monospace',
+        textAlign: 'center',
     },
     modalButton: {
-        backgroundColor: '#007bff', // Plava boja za gumbe u modalu
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
+        backgroundColor: 'transparent', // Bez pozadine
+        borderColor: '#4a8a79', // Tamnija varijacija #b8e0d2
+        borderWidth: 2,
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 0,
+        elevation: 0,
+        shadowColor: 'transparent',
     },
     modalButtonText: {
-        color: 'white',
+        color: '#4a8a79', // Tamnija varijacija #b8e0d2
         fontSize: 18,
         fontWeight: 'bold',
         textAlign: 'center',
+        fontFamily: 'monospace',
     },
 });
 
