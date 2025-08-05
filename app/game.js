@@ -1,8 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Modal, Pressable } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// Firebase Imports
+import { getAuth } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { app, db } from '../firebase'; // PRILAGODI OVU PUTANJU AKO JE POTREBNO
+
+const auth = getAuth(app); // Inicijaliziraj auth instancu
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -45,7 +51,7 @@ const imagePairs = [
 ];
 
 const GameScreen = () => {
-
+    const navigation = useNavigation();
     const [modalVisible, setModalVisible] = useState(false);
     const [intervalId, setIntervalId] = useState(null);
 
@@ -55,6 +61,28 @@ const GameScreen = () => {
 
     const [timer, setTimer] = useState(0);
     const timerRef = useRef(null);
+
+    const [currentUserUsername, setCurrentUserUsername] = useState(null); // Za spremanje korisničkog imena
+
+    // Dohvati korisničko ime pri učitavanju komponente
+    useEffect(() => {
+        const fetchUsername = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    if (userDocSnap.exists()) {
+                        setCurrentUserUsername(userDocSnap.data().username);
+                    }
+                } catch (error) {
+                    console.error("Greška pri dohvatu korisničkog imena:", error);
+                }
+            }
+        };
+        fetchUsername();
+    }, []);
+
 
     useEffect(() => {
         shuffleCards();
@@ -74,25 +102,57 @@ const GameScreen = () => {
     };
 
     const shuffleCards = () => {
-
         const shuffled = [...imagePairs].sort(() => Math.random() - 0.5);
         setCards(shuffled);
-
     };
 
     useEffect(() => {
         if (matchedPairs.length === imagePairs.length / 2) {
-            clearInterval(intervalId);
-            AsyncStorage.setItem('previousResult', timer.toString());
-            checkBestResult();
+            stopTimer(); // Zaustavi štopericu
+            // Spremi rezultat u AsyncStorage i Firestore
+            saveResult(timer);
             setModalVisible(true);
         }
-    }, [matchedPairs]);
+    }, [matchedPairs, timer]); // Dodan timer kao ovisnost
 
-    const checkBestResult = async () => {
-        const best = await AsyncStorage.getItem('bestResult');
-        if (!best || timer < parseInt(best)) {
-            await AsyncStorage.setItem('bestResult', timer.toString());
+    const saveResult = async (finalTime) => {
+        const user = auth.currentUser;
+        if (!user) {
+            console.warn("Nema prijavljenog korisnika, rezultat neće biti spremljen u Firestore.");
+            return;
+        }
+
+        // Spremi u AsyncStorage
+        await AsyncStorage.setItem('previousResult', finalTime.toString());
+        const bestLocal = await AsyncStorage.getItem('bestResult');
+        if (!bestLocal || finalTime < parseInt(bestLocal)) {
+            await AsyncStorage.setItem('bestResult', finalTime.toString());
+        }
+
+        // Spremi u Firestore
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            let currentBestFirestore = null;
+
+            if (userDocSnap.exists()) {
+                currentBestFirestore = userDocSnap.data().bestResult;
+            }
+
+            // Ažuriraj Firestore samo ako je novi rezultat bolji ili ako rezultat ne postoji
+            if (currentBestFirestore === null || finalTime < currentBestFirestore) {
+                await setDoc(userDocRef, {
+                    bestResult: finalTime,
+                    // username i email bi već trebali biti tamo od registracije, ali ih možemo ažurirati ako želimo
+                    // ili osigurati da su prisutni ako je korisnik samo prijavljen
+                }, { merge: true }); // Koristi merge: true da ne prebrišeš ostale podatke
+                console.log("Najbolji rezultat spremljen u Firestore:", finalTime);
+            } else {
+                console.log("Novi rezultat nije bolji od postojećeg najboljeg rezultata u Firestore-u.");
+            }
+        } catch (error) {
+            console.error("Greška pri spremanju rezultata u Firestore:", error);
+            Alert.alert("Greška", "Nismo uspjeli spremiti tvoj najbolji rezultat na rang listu.");
         }
     };
 
@@ -118,28 +178,14 @@ const GameScreen = () => {
                 setMatchedPairs(newMatchedPairs);
                 setTimeout(() => setSelectedCards([]), 800);
 
-                // ✅ Provjeri kraj igre
-                if (newMatchedPairs.length === imagePairs.length / 2) {
-                    stopTimer();
-                    saveResult(timer);
-                }
+                // ✅ Provjeri kraj igre (ovo je već rukovano u useEffect iznad)
             } else {
                 setTimeout(() => setSelectedCards([]), 800);
             }
         }
     };
 
-    const saveResult = async (finalTime) => {
-        await AsyncStorage.setItem('previousResult', finalTime.toString());
-        const best = await AsyncStorage.getItem('bestResult');
-        if (!best || finalTime < parseInt(best)) {
-            await AsyncStorage.setItem('bestResult', finalTime.toString());
-        }
-
-    };
-
     const renderCard = ({ item }) => {
-
         const isFlipped =
             selectedCards.find((c) => c.id === item.id) ||
             matchedPairs.includes(item.pairId);
@@ -205,8 +251,7 @@ const GameScreen = () => {
                                 setMatchedPairs([]);
                                 setSelectedCards([]);
                                 setTimer(0);
-                                const id = setInterval(() => setTimer(prev => prev + 10), 10);
-                                setIntervalId(id);
+                                startTimer(); // Ponovno pokreni timer
                             }}
                             style={({ pressed }) => [
                                 styles.modalButton,
@@ -214,31 +259,26 @@ const GameScreen = () => {
                                 pressed && { opacity: 0.6 },
                             ]}
                         >
-                            <Text>Pokušaj ponovno</Text>
+                            <Text style={styles.modalButtonText}>Pokušaj ponovno</Text>
                         </Pressable>
 
                         <Pressable
                             onPress={() => {
                                 setModalVisible(false);
-                                navigation.navigate('ranking');
+                                navigation.navigate('ranking'); // Navigiraj na RankingScreen
                             }}
                             style={({ pressed }) => [
                                 styles.modalButton,
                                 pressed && { opacity: 0.6 },
                             ]}
                         >
-                            <Text>Rang lista</Text>
+                            <Text style={styles.modalButtonText}>Rang lista</Text>
                         </Pressable>
                     </View>
                 </View>
             </Modal>
-
-
-
-
         </View>
     );
-
 };
 
 const styles = StyleSheet.create({
@@ -268,33 +308,28 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 3,
     },
-
     cardBack: {
         backgroundColor: '#42515a',
         width: '100%',
         height: '100%',
         borderRadius: 8,
     },
-
     image: {
         width: '80%',
         height: '80%',
         resizeMode: 'contain',
     },
-
     text: {
         fontSize: 16,
         fontWeight: 'bold',
         color: '#333',
     },
-
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
-
     modalContent: {
         backgroundColor: '#fff',
         padding: 30,
@@ -302,18 +337,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '80%',
     },
-
     modalButton: {
-        fontSize: 18,
-        color: 'blue',
+        backgroundColor: '#007bff', // Plava boja za gumbe u modalu
         paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: '#42515a',
+        borderRadius: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+    },
+    modalButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
         textAlign: 'center',
     },
-
 });
 
 export default GameScreen;

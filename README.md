@@ -3,18 +3,20 @@
 ```
 memo-md/
 ├── .expo/
-├── .idea/
+├── .vscode/
 ├── assets/
 ├── node_modules/
-├── src/
-├── .DS_Store
 ├── .gitignore
 ├── App.js
 ├── app.json
 ├── babel.config.js
+├── eslint.config.js
+├── expo-env.d.ts
+├── firebase.js
 ├── package-lock.json
 ├── package.json
-└── struktura.txt
+├── README.md
+└── tsconfig.json
 ```
 
 ## Pokretanje aplikacije lokalno
