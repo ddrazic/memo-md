@@ -2,9 +2,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-// Firebase Imports
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase'; // PRILAGODI OVU PUTANJU AKO JE POTREBNO
+import { db } from '../firebase';
 
 const RankingScreen = () => {
     const navigation = useNavigation();
@@ -18,15 +17,11 @@ const RankingScreen = () => {
             setError('');
             try {
                 const usersRef = collection(db, 'users');
-                // Dohvaćamo sve korisnike. Sortiranje i filtriranje radimo klijentski
-                // jer Firestore orderBy() zahtijeva indeks, a za dinamičko sortiranje
-                // po najboljem vremenu bez indeksa je jednostavnije klijentski.
                 const querySnapshot = await getDocs(usersRef);
 
                 let usersWithScores = [];
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    // Provjeravamo ima li korisnik 'bestResult' i je li broj
                     if (data.username && typeof data.bestResult === 'number') {
                         usersWithScores.push({
                             id: doc.id,
@@ -36,7 +31,6 @@ const RankingScreen = () => {
                     }
                 });
 
-                // Sortiraj rezultate: najkraće vrijeme je najbolje (uzlazno)
                 usersWithScores.sort((a, b) => a.bestResult - b.bestResult);
 
                 setRankingData(usersWithScores);
@@ -97,18 +91,24 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#f8f8f8',
+        backgroundColor: '#e6f0ed',
         alignItems: 'center',
     },
     title: {
-        fontSize: 28,
+        fontSize: 40,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 20,
+        color: '#4a8a79',
+        marginBottom: 40,
         fontFamily: 'monospace',
+        letterSpacing: 2,
+        textShadowColor: 'rgba(0,0,0,0.1)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 1,
+        textAlign: 'center',
     },
     list: {
         width: '100%',
+        flex: 1,
     },
     listContent: {
         paddingBottom: 20,
@@ -117,67 +117,74 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffff',
         paddingVertical: 15,
         paddingHorizontal: 20,
-        borderRadius: 10,
+        borderRadius: 0,
+        borderWidth: 2,
+        borderColor: '#86b3a2',
         marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
+        elevation: 0,
+        shadowColor: 'transparent',
     },
     rankText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#555',
-        width: 30, // Fiksna širina za rang
+        color: '#4a8a79',
+        width: 30,
+        fontFamily: 'monospace',
     },
     usernameText: {
-        flex: 1, // Zauzima preostali prostor
+        flex: 1,
         fontSize: 18,
-        color: '#333',
+        color: '#757575',
         fontWeight: '600',
+        fontFamily: 'monospace',
+        marginLeft: 10,
     },
     scoreText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#007bff', // Plava boja za rezultat
+        color: '#1e4034',
         marginLeft: 10,
+        fontFamily: 'monospace',
     },
     loadingText: {
         fontSize: 18,
-        color: '#555',
+        color: '#757575',
+        fontFamily: 'monospace',
     },
     errorText: {
-        color: '#dc3545',
+        color: '#e57373',
         fontSize: 16,
         textAlign: 'center',
         marginTop: 20,
+        fontFamily: 'monospace',
     },
     noDataText: {
         fontSize: 16,
-        color: '#777',
+        color: '#757575',
         textAlign: 'center',
         marginTop: 50,
+        fontFamily: 'monospace',
     },
     backButton: {
-        backgroundColor: '#6c757d', // Siva boja za natrag
+        backgroundColor: 'transparent',
+        borderColor: '#4a8a79',
+        borderWidth: 2,
         paddingVertical: 12,
         paddingHorizontal: 25,
-        borderRadius: 10,
+        borderRadius: 0,
         marginTop: 30,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 5,
+        elevation: 0,
+        shadowColor: 'transparent',
     },
     backButtonText: {
-        color: 'white',
+        color: '#4a8a79',
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: 'monospace',
+        letterSpacing: 1,
     },
 });
 
