@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { getAuth } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -12,9 +12,26 @@ const auth = getAuth(app);
 const screenWidth = Dimensions.get('window').width;
 
 const CARD_MARGIN = 5;
-const NUM_COLUMNS = 4;
 
-const CARD_SIZE = (screenWidth - CARD_MARGIN * 2 * NUM_COLUMNS - 20) / NUM_COLUMNS;
+const NUM_COLUMNS_WEB = 5;
+const NUM_COLUMNS_DEFAULT = 4;
+
+const ACTUAL_NUM_COLUMNS = Platform.select({
+    web: NUM_COLUMNS_WEB,
+    default: NUM_COLUMNS_DEFAULT,
+});
+
+const MAX_GAME_WIDTH_WEB = 600;
+
+
+const calculateCardSize = (availableWidth, columns) => {
+    return (availableWidth - CARD_MARGIN * 2 * columns - 20) / columns;
+};
+
+const CARD_SIZE = Platform.select({
+    web: calculateCardSize(MAX_GAME_WIDTH_WEB, NUM_COLUMNS_WEB),
+    default: calculateCardSize(screenWidth, NUM_COLUMNS_DEFAULT),
+});
 
 
 const imagePairs = [
@@ -128,16 +145,36 @@ const GameScreen = () => {
             const userDocRef = doc(db, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
             let currentBestFirestore = null;
+            let usernameToSave = null;
 
             if (userDocSnap.exists()) {
-                currentBestFirestore = userDocSnap.data().bestResult;
+                const data = userDocSnap.data();
+                currentBestFirestore = data.bestResult;
+                usernameToSave = data.username;
+            }
+
+            if (!usernameToSave && user.email) {
+                usernameToSave = user.email;
+            } else if (!usernameToSave && user.displayName) {
+                usernameToSave = user.displayName;
+            } else if (!usernameToSave) {
+                usernameToSave = "NepoznatiKorisnik";
+            }
+
+
+            const dataToSave = {
+                bestResult: finalTime,
+            };
+
+            if (usernameToSave) {
+                dataToSave.username = usernameToSave;
+            } else {
+                console.warn("Korisničko ime nije dostupno za spremanje rezultata.");
             }
 
             if (currentBestFirestore === null || finalTime < currentBestFirestore) {
-                await setDoc(userDocRef, {
-                    bestResult: finalTime,
-                }, { merge: true });
-                console.log("Najbolji rezultat spremljen u Firestore:", finalTime);
+                await setDoc(userDocRef, dataToSave, { merge: true });
+                console.log("Najbolji rezultat spremljen u Firestore:", finalTime, "za korisnika:", usernameToSave);
             } else {
                 console.log("Novi rezultat nije bolji od postojećeg najboljeg rezultata u Firestore-u.");
             }
@@ -191,7 +228,7 @@ const GameScreen = () => {
                     item.type === 'image' ? (
                         <Image source={item.content} style={styles.image} />
                     ) : (
-                        <Text style={styles.text}>{item.content}</Text>
+                        <Text style={styles.cardText}>{item.content}</Text>
                     )
                 ) : (
                     <View style={styles.cardBack} />
@@ -208,19 +245,15 @@ const GameScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.timerText}>{formatTime(timer)} s</Text>
+            <Text style={styles.timerText}>⏱️ Vrijeme: {formatTime(timer)} s</Text>
 
             <FlatList
                 data={cards}
                 renderItem={renderCard}
                 keyExtractor={(item) => item.id}
-                numColumns={4}
+                numColumns={ACTUAL_NUM_COLUMNS}
                 scrollEnabled={false}
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}
+                contentContainerStyle={styles.cardListContent}
             />
 
             <Modal
@@ -230,7 +263,7 @@ const GameScreen = () => {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={[styles.text, { marginBottom: 30 }]}>
+                        <Text style={[styles.modalResultText, { marginBottom: 30 }]}>
                             Tvoj rezultat: {formatTime(timer)}
                         </Text>
 
@@ -255,7 +288,7 @@ const GameScreen = () => {
                         <Pressable
                             onPress={() => {
                                 setModalVisible(false);
-                                navigation.navigate('ranking');
+                                navigation.navigate('Ranking');
                             }}
                             style={({ pressed }) => [
                                 styles.modalButton,
@@ -274,20 +307,29 @@ const GameScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 10,
+        paddingHorizontal: 10,
+        paddingTop: 80,
         backgroundColor: '#e6f0ed',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
     },
     timerText: {
         fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
+        marginBottom: 40,
         color: '#4a8a79',
-        fontFamily: 'monospace',
+        fontFamily: 'system-ui',
     },
     cardListContent: {
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        ...Platform.select({
+            web: {
+                maxWidth: MAX_GAME_WIDTH_WEB,
+            },
+        }),
     },
     card: {
         margin: CARD_MARGIN,
@@ -315,7 +357,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#4a8a79',
-        fontFamily: 'monospace',
+        fontFamily: 'system-ui',
         textAlign: 'center',
     },
     modalContainer: {
@@ -337,7 +379,7 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: 'bold',
         color: '#1e4034',
-        fontFamily: 'monospace',
+        fontFamily: 'system-ui',
         textAlign: 'center',
     },
     modalButton: {
@@ -355,7 +397,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         textAlign: 'center',
-        fontFamily: 'monospace',
+        fontFamily: 'system-ui',
     },
 });
 
