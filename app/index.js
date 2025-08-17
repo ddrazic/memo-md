@@ -1,253 +1,215 @@
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore'; 
+import { auth, db } from '../firebase';
 import { useNavigation } from '@react-navigation/native';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-    createUserWithEmailAndPassword,
-    getAuth,
-    onAuthStateChanged,
-
-    signInWithEmailAndPassword
-} from 'firebase/auth';
-
-import { app, db } from '../firebase';
-
-
-const auth = getAuth(app);
-
-
-const LoginScreen = () => {
-    const navigation = useNavigation();
-
+const LoginScreen = ({ onToggleScreen }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [username, setUsername] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-
-            if (user) {
-
-                navigation.replace('start', { userId: user.uid });
-            }
-
-        });
-
-        return unsubscribe;
-    }, [navigation]);
+    const navigation = useNavigation();
 
     const handleLogin = async () => {
-        setLoading(true);
-        setError('');
         try {
-
+            if (!email || !password) {
+                Alert.alert("Greška", "Molimo unesite email i lozinku.");
+                return;
+            }
             await signInWithEmailAndPassword(auth, email, password);
-            console.log('Korisnik uspješno prijavljen!');
-        } catch (err) {
-            let errorMessage = 'Neuspješna prijava. Provjerite svoje vjerodajnice.';
-            if (err.code === 'auth/invalid-email') {
-                errorMessage = 'Nevažeća adresa e-pošte.';
-            } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                errorMessage = 'Nevažeća e-pošta ili lozinka.';
-            } else if (err.code === 'auth/too-many-requests') {
-                errorMessage = 'Previše pokušaja prijave. Pokušajte ponovno kasnije.';
-            }
-            setError(errorMessage);
-            console.error('Pogreška pri prijavi:', err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRegister = async () => {
-        setLoading(true);
-        setError('');
-        if (!username.trim()) {
-            setError('Korisničko ime ne može biti prazno.');
-            setLoading(false);
-            return;
-        }
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            await setDoc(doc(db, 'users', user.uid), {
-                username: username,
-                email: email,
-                createdAt: new Date()
-            });
-
-            console.log('Korisnik registriran i korisničko ime spremljeno:', user.uid);
-        } catch (err) {
-            let errorMessage = 'Neuspješna registracija. Pokušajte ponovno.';
-            if (err.code === 'auth/email-already-in-use') {
-                errorMessage = 'Ova e-pošta je već u upotrebi.';
-            } else if (err.code === 'auth/invalid-email') {
-                errorMessage = 'Nevažeća adresa e-pošte.';
-            } else if (err.code === 'auth/weak-password') {
-                errorMessage = 'Lozinka bi trebala imati najmanje 6 znakova.';
-            }
-            setError(errorMessage);
-            console.error('Pogreška pri registraciji:', err.message);
-        } finally {
-            setLoading(false);
+            navigation.navigate('start');
+        } catch (error) {
+            Alert.alert("Greška kod prijave", error.message);
         }
     };
 
     return (
-        <SafeAreaProvider>
-            <SafeAreaView style={styles.container}>
-                <Text style={styles.title}>
-                    MEMO m.d.
-                </Text>
-
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+            <Text style={styles.title}>Dobrodošli u{"\n"}MEMO m.d.!</Text>
+            <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
-                    onChangeText={setEmail}
-                    value={email}
                     placeholder="E-pošta"
+                    placeholderTextColor="#34656d67" 
+                    value={email}
+                    onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    placeholderTextColor="#999"
                 />
-
                 <TextInput
                     style={styles.input}
-                    onChangeText={setPassword}
-                    value={password}
                     placeholder="Lozinka"
+                    placeholderTextColor="#34656d67" 
+                    value={password}
+                    onChangeText={setPassword}
                     secureTextEntry
-                    placeholderTextColor="#999"
                 />
-
-                {isRegistering && (
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setUsername}
-                        value={username}
-                        placeholder="Korisničko ime"
-                        autoCapitalize="words"
-                        placeholderTextColor="#999"
-                    />
-                )}
-
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={isRegistering ? handleRegister : handleLogin}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <Text style={styles.buttonText}>{isRegistering ? 'Registracija' : 'Prijava'}</Text>
-                    )}
+            </View>
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText}>Prijava</Text>
+            </TouchableOpacity>
+            <View style={styles.toggleTextContainer}>
+                <Text style={styles.toggleText}>Nemate račun?</Text>
+                <TouchableOpacity onPress={onToggleScreen}>
+                    <Text style={[styles.toggleText, styles.linkText]}>Registracija</Text>
                 </TouchableOpacity>
-
-                <View style={styles.toggleContainer}>
-                    <Text style={styles.toggleText}>
-                        {isRegistering ? 'Već imate račun?' : 'Nemate račun?'}
-                    </Text>
-                    <TouchableOpacity onPress={() => {
-                        setIsRegistering(!isRegistering);
-                        setError('');
-                        setEmail('');
-                        setPassword('');
-                        setUsername('');
-                    }}>
-                        <Text style={styles.toggleButtonText}>
-                            {isRegistering ? 'Prijava' : 'Registracija'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-            </SafeAreaView>
-        </SafeAreaProvider>
+            </View>
+        </KeyboardAvoidingView>
     );
 };
 
+const RegisterScreen = ({ onToggleScreen }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+    const navigation = useNavigation();
+
+    const handleRegister = async () => {
+        try {
+            if (!email || !password || !username) {
+                Alert.alert("Greška", "Molimo popunite sva polja.");
+                return;
+            }
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await setDoc(doc(db, "users", user.uid), {
+                username: username,
+                bestScore: null,
+                timestamp: new Date()
+            });
+            navigation.navigate('start');
+        } catch (error) {
+            Alert.alert("Greška kod registracije", error.message);
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+            <Text style={styles.title}>Dobrodošli u{"\n"}MEMO!</Text>
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.input}
+                    placeholder="E-pošta"
+                    placeholderTextColor="#34656d67" 
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Lozinka"
+                    placeholderTextColor="#34656d67" 
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Korisničko ime"
+                    placeholderTextColor="#34656d67" 
+                    value={username}
+                    onChangeText={setUsername}
+                    autoCapitalize="none"
+                />
+            </View>
+            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+                <Text style={styles.buttonText}>Registracija</Text>
+            </TouchableOpacity>
+            <View style={styles.toggleTextContainer}>
+                <Text style={styles.toggleText}>Već imate račun?</Text>
+                <TouchableOpacity onPress={onToggleScreen}>
+                    <Text style={[styles.toggleText, styles.linkText]}>Prijava</Text>
+                </TouchableOpacity>
+            </View>
+        </KeyboardAvoidingView>
+    );
+};
+
+export default function App() {
+    const [isLoginScreen, setIsLoginScreen] = useState(true);
+
+    const toggleScreen = () => {
+        setIsLoginScreen(!isLoginScreen);
+    };
+
+    return (
+        <View style={styles.appContainer}>
+            {isLoginScreen ? (
+                <LoginScreen onToggleScreen={toggleScreen} />
+            ) : (
+                <RegisterScreen onToggleScreen={toggleScreen} />
+            )}
+        </View>
+    );
+}
+
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
+    appContainer: {
         flex: 1,
+        backgroundColor: '#E7F2F1',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#e6f0ed',
+        padding: 20,
+    },
+    container: {
+        width: '100%',
+        maxWidth: 350,
+        alignItems: 'center',
     },
     title: {
-        fontSize: 40,
+        fontSize: 32,
         fontWeight: 'bold',
-        color: '#4a8a79',
-        marginBottom: 40,
-        fontFamily: 'system-ui',
-        letterSpacing: 2,
-        textShadowColor: 'rgba(0,0,0,0.1)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 1,
+        color: '#34656D',
         textAlign: 'center',
+        marginBottom: 40,
+        lineHeight: 40,
+    },
+    inputContainer: {
+        width: '100%',
+        marginBottom: 20,
     },
     input: {
-        width: '85%',
-        height: 50,
-        borderColor: '#4a8a79',
-        borderWidth: 2,
-        marginBottom: 20,
-        paddingHorizontal: 15,
-        borderRadius: 0,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#fff',
+        width: '100%',
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#ccc',
         fontSize: 16,
-        color: '#4a8a79',
-        fontFamily: 'system-ui',
     },
     button: {
-        width: '85%',
-        height: 50,
-        borderColor: '#4a8a79',
-        borderWidth: 2,
-        justifyContent: 'center',
+        backgroundColor: '#34656D',
+        width: '100%',
+        padding: 18,
+        borderRadius: 10,
         alignItems: 'center',
-        borderRadius: 0,
-        marginTop: 15,
-        backgroundColor: 'transparent',
+        marginBottom: 20,
     },
     buttonText: {
-        color: '#4a8a79',
+        color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
-        fontFamily: 'system-ui',
-        letterSpacing: 1,
     },
-    errorText: {
-        color: '#e57373',
-        marginBottom: 15,
-        fontSize: 14,
-        textAlign: 'center',
-        fontFamily: 'system-ui',
-    },
-    toggleContainer: {
+    toggleTextContainer: {
         flexDirection: 'row',
-        marginTop: 30,
-        alignItems: 'center',
+        justifyContent: 'center',
     },
     toggleText: {
+        color: '#888',
         fontSize: 16,
-        color: '#757575',
-        fontFamily: 'system-ui',
+        marginRight: 5,
     },
-    toggleButtonText: {
-        fontSize: 16,
-        color: '#42a5f5',
+    linkText: {
+        color: '#34656D',
         fontWeight: 'bold',
-        marginLeft: 5,
-        fontFamily: 'system-ui',
-        textDecorationLine: 'underline',
     },
 });
-
-export default LoginScreen;

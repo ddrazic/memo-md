@@ -4,8 +4,11 @@
 memo-md/
 ├── .expo/
 ├── .vscode/
+├── app/
 ├── assets/
 ├── node_modules/
+├── utils/
+├── .env
 ├── .gitignore
 ├── App.js
 ├── app.json

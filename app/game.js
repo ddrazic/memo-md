@@ -1,404 +1,333 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-import { getAuth } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { app, db } from '../firebase';
-
-const auth = getAuth(app);
-
-const screenWidth = Dimensions.get('window').width;
-
-const CARD_MARGIN = 5;
-
-const NUM_COLUMNS_WEB = 5;
-const NUM_COLUMNS_DEFAULT = 4;
-
-const ACTUAL_NUM_COLUMNS = Platform.select({
-    web: NUM_COLUMNS_WEB,
-    default: NUM_COLUMNS_DEFAULT,
-});
-
-const MAX_GAME_WIDTH_WEB = 600;
-
-
-const calculateCardSize = (availableWidth, columns) => {
-    return (availableWidth - CARD_MARGIN * 2 * columns - 20) / columns;
-};
-
-const CARD_SIZE = Platform.select({
-    web: calculateCardSize(MAX_GAME_WIDTH_WEB, NUM_COLUMNS_WEB),
-    default: calculateCardSize(screenWidth, NUM_COLUMNS_DEFAULT),
-});
-
+import { doc, getDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../firebase';
 
 const imagePairs = [
-    { id: '1', type: 'image', content: require('../assets/images/firebase.png'), pairId: 'firebase' },
-    { id: '2', type: 'text', content: 'Firebase', pairId: 'firebase' },
+  { id: '1', type: 'image', content: require('../assets/images/firebase.png'), pairId: 'firebase' },
+  { id: '2', type: 'text', content: 'Firebase', pairId: 'firebase' },
 
-    { id: '3', type: 'image', content: require('../assets/images/flutter.png'), pairId: 'flutter' },
-    { id: '4', type: 'text', content: 'Flutter', pairId: 'flutter' },
+  { id: '3', type: 'image', content: require('../assets/images/flutter.png'), pairId: 'flutter' },
+  { id: '4', type: 'text', content: 'Flutter', pairId: 'flutter' },
 
-    { id: '5', type: 'image', content: require('../assets/images/java.png'), pairId: 'java' },
-    { id: '6', type: 'text', content: 'Java', pairId: 'java' },
+  { id: '5', type: 'image', content: require('../assets/images/java.png'), pairId: 'java' },
+  { id: '6', type: 'text', content: 'Java', pairId: 'java' },
 
-    { id: '7', type: 'image', content: require('../assets/images/kotlin.png'), pairId: 'kotlin' },
-    { id: '8', type: 'text', content: 'Kotlin', pairId: 'kotlin' },
+  { id: '7', type: 'image', content: require('../assets/images/kotlin.png'), pairId: 'kotlin' },
+  { id: '8', type: 'text', content: 'Kotlin', pairId: 'kotlin' },
 
-    { id: '9', type: 'image', content: require('../assets/images/python.png'), pairId: 'python' },
-    { id: '10', type: 'text', content: 'Python', pairId: 'python' },
+  { id: '9', type: 'image', content: require('../assets/images/python.png'), pairId: 'python' },
+  { id: '10', type: 'text', content: 'Python', pairId: 'python' },
 
-    { id: '11', type: 'image', content: require('../assets/images/react.png'), pairId: 'react' },
-    { id: '12', type: 'text', content: 'React', pairId: 'react' },
+  { id: '11', type: 'image', content: require('../assets/images/react.png'), pairId: 'react' },
+  { id: '12', type: 'text', content: 'React', pairId: 'react' },
 
-    { id: '13', type: 'image', content: require('../assets/images/ruby.png'), pairId: 'ruby' },
-    { id: '14', type: 'text', content: 'Ruby', pairId: 'ruby' },
+  { id: '13', type: 'image', content: require('../assets/images/ruby.png'), pairId: 'ruby' },
+  { id: '14', type: 'text', content: 'Ruby', pairId: 'ruby' },
 
-    { id: '15', type: 'image', content: require('../assets/images/sql.png'), pairId: 'sql' },
-    { id: '16', type: 'text', content: 'SQL', pairId: 'sql' },
+  { id: '15', type: 'image', content: require('../assets/images/sql.png'), pairId: 'sql' },
+  { id: '16', type: 'text', content: 'SQL', pairId: 'sql' },
 
-    { id: '17', type: 'image', content: require('../assets/images/swift.png'), pairId: 'swift' },
-    { id: '18', type: 'text', content: 'Swift', pairId: 'swift' },
+  { id: '17', type: 'image', content: require('../assets/images/swift.png'), pairId: 'swift' },
+  { id: '18', type: 'text', content: 'Swift', pairId: 'swift' },
 
-    { id: '19', type: 'image', content: require('../assets/images/vsc.png'), pairId: 'vsc' },
-    { id: '20', type: 'text', content: 'VS Code', pairId: 'vsc' },
+  { id: '19', type: 'image', content: require('../assets/images/vsc.png'), pairId: 'vsc' },
+  { id: '20', type: 'text', content: 'VS Code', pairId: 'vsc' },
 ];
 
+const generateCards = () => {
+  return imagePairs
+    .map(card => ({ ...card, isFlipped: false, isMatched: false }))
+    .sort(() => Math.random() - 0.5);
+};
+
 const GameScreen = () => {
-    const navigation = useNavigation();
-    const [modalVisible, setModalVisible] = useState(false);
-    const [intervalId, setIntervalId] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [flippedCards, setFlippedCards] = useState([]);
+  const [matchedCards, setMatchedCards] = useState([]);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [finalTime, setFinalTime] = useState(0);
+  const [username, setUsername] = useState('Učitavanje...');
+  const navigation = useNavigation();
 
-    const [cards, setCards] = useState([]);
-    const [selectedCards, setSelectedCards] = useState([]);
-    const [matchedPairs, setMatchedPairs] = useState([]);
+  const updateBestScore = async (newScore) => {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
 
-    const [timer, setTimer] = useState(0);
-    const timerRef = useRef(null);
-
-    const [currentUserUsername, setCurrentUserUsername] = useState(null);
-
-    useEffect(() => {
-        const fetchUsername = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const userDocSnap = await getDoc(userDocRef);
-                    if (userDocSnap.exists()) {
-                        setCurrentUserUsername(userDocSnap.data().username);
-                    }
-                } catch (error) {
-                    console.error("Greška pri dohvatu korisničkog imena:", error);
-                }
-            }
-        };
-        fetchUsername();
-    }, []);
-
-
-    useEffect(() => {
-        shuffleCards();
-        startTimer();
-        return stopTimer;
-    }, []);
-
-    const startTimer = () => {
-        timerRef.current = setInterval(() => {
-            setTimer((prev) => prev + 10);
-        }, 10);
-    };
-
-    const stopTimer = () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-    };
-
-    const shuffleCards = () => {
-        const shuffled = [...imagePairs].sort(() => Math.random() - 0.5);
-        setCards(shuffled);
-    };
-
-    useEffect(() => {
-        if (matchedPairs.length === imagePairs.length / 2) {
-            stopTimer();
-            saveResult(timer);
-            setModalVisible(true);
+        if (userDocSnap.exists()) {
+          const currentBestScore = userDocSnap.data().bestScore;
         }
-    }, [matchedPairs, timer]);
+      } catch (error) {
+        console.error("Greška pri ažuriranju rezultata:", error);
+      }
+    }
+  };
 
-    const saveResult = async (finalTime) => {
-        const user = auth.currentUser;
-        if (!user) {
-            console.warn("Nema prijavljenog korisnika, rezultat neće biti spremljen u Firestore.");
-            return;
+  useEffect(() => {
+    const fetchUsername = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUsername(userDocSnap.data().username);
         }
-
-        await AsyncStorage.setItem('previousResult', finalTime.toString());
-        const bestLocal = await AsyncStorage.getItem('bestResult');
-        if (!bestLocal || finalTime < parseInt(bestLocal)) {
-            await AsyncStorage.setItem('bestResult', finalTime.toString());
-        }
-
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            let currentBestFirestore = null;
-            let usernameToSave = null;
-
-            if (userDocSnap.exists()) {
-                const data = userDocSnap.data();
-                currentBestFirestore = data.bestResult;
-                usernameToSave = data.username;
-            }
-
-            if (!usernameToSave && user.email) {
-                usernameToSave = user.email;
-            } else if (!usernameToSave && user.displayName) {
-                usernameToSave = user.displayName;
-            } else if (!usernameToSave) {
-                usernameToSave = "NepoznatiKorisnik";
-            }
-
-
-            const dataToSave = {
-                bestResult: finalTime,
-            };
-
-            if (usernameToSave) {
-                dataToSave.username = usernameToSave;
-            } else {
-                console.warn("Korisničko ime nije dostupno za spremanje rezultata.");
-            }
-
-            if (currentBestFirestore === null || finalTime < currentBestFirestore) {
-                await setDoc(userDocRef, dataToSave, { merge: true });
-                console.log("Najbolji rezultat spremljen u Firestore:", finalTime, "za korisnika:", usernameToSave);
-            } else {
-                console.log("Novi rezultat nije bolji od postojećeg najboljeg rezultata u Firestore-u.");
-            }
-        } catch (error) {
-            console.error("Greška pri spremanju rezultata u Firestore:", error);
-            Alert.alert("Greška", "Nismo uspjeli spremiti tvoj najbolji rezultat na rang listu.");
-        }
+      }
     };
+    fetchUsername();
+    initializeGame();
+  }, []);
 
+  useEffect(() => {
+    let timer;
+    if (gameStarted) {
+      timer = setInterval(() => {
+        setTimeElapsed(prevTime => prevTime + 0.01);
+      }, 10);
+    } else if (timer) {
+      clearInterval(timer);
+    }
+    return () => clearInterval(timer);
+  }, [gameStarted]);
 
-    const handleCardPress = (card) => {
-        if (
-            selectedCards.length === 2 ||
-            selectedCards.find((c) => c.id === card.id) ||
-            matchedPairs.includes(card.pairId)
-        ) {
-            return;
-        }
+  useEffect(() => {
+    if (matchedCards.length === imagePairs.length / 2 && imagePairs.length > 0) {
+      setGameStarted(false);
+      setFinalTime(timeElapsed);
+      setIsModalVisible(true);
+      updateBestScore(timeElapsed);
+    }
+  }, [matchedCards, timeElapsed]);
 
-        const newSelected = [...selectedCards, card];
-        setSelectedCards(newSelected);
+  const initializeGame = () => {
+    setCards(generateCards());
+    setFlippedCards([]);
+    setMatchedCards([]);
+    setGameStarted(false);
+    setTimeElapsed(0);
+    setIsModalVisible(false);
+  };
 
-        if (newSelected.length === 2) {
-            if (
-                newSelected[0].pairId === newSelected[1].pairId &&
-                newSelected[0].type !== newSelected[1].type
-            ) {
-                const newMatchedPairs = [...matchedPairs, newSelected[0].pairId];
-                setMatchedPairs(newMatchedPairs);
-                setTimeout(() => setSelectedCards([]), 800);
+  const handleCardPress = (id) => {
+    const card = cards.find(c => c.id === id);
+    if (flippedCards.length === 2 || card.isFlipped || matchedCards.includes(card.pairId)) {
+      return;
+    }
 
-            } else {
-                setTimeout(() => setSelectedCards([]), 800);
-            }
-        }
-    };
+    if (!gameStarted) {
+      setGameStarted(true);
+    }
 
-    const renderCard = ({ item }) => {
-        const isFlipped =
-            selectedCards.find((c) => c.id === item.id) ||
-            matchedPairs.includes(item.pairId);
+    const newCards = [...cards];
+    const cardToFlip = newCards.find(c => c.id === id);
+    cardToFlip.isFlipped = true;
 
-        return (
-            <TouchableOpacity
-                style={[styles.card, { width: CARD_SIZE, height: CARD_SIZE }]}
-                onPress={() => handleCardPress(item)}
-                activeOpacity={0.8}
-                disabled={!!isFlipped}
-            >
-                {isFlipped ? (
-                    item.type === 'image' ? (
-                        <Image source={item.content} style={styles.image} />
-                    ) : (
-                        <Text style={styles.cardText}>{item.content}</Text>
-                    )
-                ) : (
-                    <View style={styles.cardBack} />
-                )}
-            </TouchableOpacity>
-        );
-    };
+    setCards(newCards);
+    setFlippedCards(prevFlipped => [...prevFlipped, cardToFlip]);
 
-    const formatTime = (ms) => {
-        const sec = Math.floor(ms / 1000);
-        const cent = Math.floor((ms % 1000) / 10);
-        return `${sec}.${cent < 10 ? '0' : ''}${cent}`;
+    if (flippedCards.length === 1) {
+      const firstCard = flippedCards[0];
+
+      if (firstCard.pairId === cardToFlip.pairId) {
+        setMatchedCards(prevMatched => [...prevMatched, firstCard.pairId]);
+        setFlippedCards([]);
+      } else {
+        setTimeout(() => {
+          const resetCards = [...newCards];
+          resetCards.find(c => c.id === firstCard.id).isFlipped = false;
+          resetCards.find(c => c.id === cardToFlip.id).isFlipped = false;
+          setCards(resetCards);
+          setFlippedCards([]);
+        }, 1000);
+      }
+    }
+  };
+
+  const renderCard = (card) => {
+    const isFlipped = card.isFlipped || matchedCards.includes(card.pairId);
+
+    const cardContent = () => {
+      if (!isFlipped) {
+        return null;
+      }
+      if (card.type === 'image') {
+        return <Image source={card.content} style={styles.cardImage} resizeMode="contain" />;
+      }
+      return <Text style={styles.cardText}>{card.content}</Text>;
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.timerText}>⏱️ Vrijeme: {formatTime(timer)} s</Text>
-
-            <FlatList
-                data={cards}
-                renderItem={renderCard}
-                keyExtractor={(item) => item.id}
-                numColumns={ACTUAL_NUM_COLUMNS}
-                scrollEnabled={false}
-                contentContainerStyle={styles.cardListContent}
-            />
-
-            <Modal
-                transparent={true}
-                animationType="slide"
-                visible={modalVisible}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={[styles.modalResultText, { marginBottom: 30 }]}>
-                            Tvoj rezultat: {formatTime(timer)}
-                        </Text>
-
-                        <Pressable
-                            onPress={() => {
-                                setModalVisible(false);
-                                shuffleCards();
-                                setMatchedPairs([]);
-                                setSelectedCards([]);
-                                setTimer(0);
-                                startTimer();
-                            }}
-                            style={({ pressed }) => [
-                                styles.modalButton,
-                                { marginBottom: 20 },
-                                pressed && { opacity: 0.6 },
-                            ]}
-                        >
-                            <Text style={styles.modalButtonText}>Pokušaj ponovno</Text>
-                        </Pressable>
-
-                        <Pressable
-                            onPress={() => {
-                                setModalVisible(false);
-                                navigation.navigate('Ranking');
-                            }}
-                            style={({ pressed }) => [
-                                styles.modalButton,
-                                pressed && { opacity: 0.6 },
-                            ]}
-                        >
-                            <Text style={styles.modalButtonText}>Rang lista</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            </Modal>
-        </View>
+      <TouchableOpacity
+        key={card.id}
+        style={[styles.card, isFlipped ? styles.cardFlipped : styles.cardDefault]}
+        onPress={() => handleCardPress(card.id)}
+      >
+        {cardContent()}
+      </TouchableOpacity>
     );
+  };
+
+  const closeModal = () => {
+    setIsModalVisible(false);
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTextUsername}>{username}</Text>
+        <Text style={styles.headerText}>Vrijeme: {timeElapsed.toFixed(2)} s</Text>
+      </View>
+      <View style={styles.grid}>
+        {cards.map(renderCard)}
+      </View>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Tvoj rezultat: {finalTime.toFixed(2)}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                closeModal();
+                initializeGame();
+              }}
+            >
+              <Text style={styles.modalButtonText}>Pokušaj ponovno</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                closeModal();
+                navigation.navigate('ranking');
+              }}
+            >
+              <Text style={styles.modalButtonText}>Rang lista</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingHorizontal: 10,
-        paddingTop: 80,
-        backgroundColor: '#e6f0ed',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-    timerText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 40,
-        color: '#4a8a79',
-        fontFamily: 'system-ui',
-    },
-    cardListContent: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...Platform.select({
-            web: {
-                maxWidth: MAX_GAME_WIDTH_WEB,
-            },
-        }),
-    },
-    card: {
-        margin: CARD_MARGIN,
-        borderRadius: 0,
-        backgroundColor: '#ffffff',
-        borderWidth: 2,
-        borderColor: '#4a8a79',
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 0,
-        shadowColor: 'transparent',
-    },
-    cardBack: {
-        backgroundColor: '#86b3a2',
-        width: '100%',
-        height: '100%',
-        borderRadius: 0,
-    },
-    image: {
-        width: '80%',
-        height: '80%',
-        resizeMode: 'contain',
-    },
-    cardText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#4a8a79',
-        fontFamily: 'system-ui',
-        textAlign: 'center',
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    modalContent: {
-        backgroundColor: '#ffffff',
-        padding: 30,
-        borderRadius: 0,
-        borderWidth: 2,
-        borderColor: '#4a8a79',
-        alignItems: 'center',
-        width: '85%',
-    },
-    modalResultText: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1e4034',
-        fontFamily: 'system-ui',
-        textAlign: 'center',
-    },
-    modalButton: {
-        backgroundColor: 'transparent',
-        borderColor: '#4a8a79',
-        borderWidth: 2,
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        borderRadius: 0,
-        elevation: 0,
-        shadowColor: 'transparent',
-    },
-    modalButtonText: {
-        color: '#4a8a79',
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        fontFamily: 'system-ui',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#E7F2F1',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 80,
+  },
+  header: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  headerText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#34656D',
+    marginBottom: 5,
+  },
+  headerTextUsername: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#34656d90',
+    marginBottom: 5,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    width: Platform.select({
+      ios: 75,
+      android: 65,
+    }),
+    height: Platform.select({
+      ios: 75,
+      android: 65,
+    }),
+    margin: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#34656D',
+  },
+  cardDefault: {
+    backgroundColor: '#95c5b985',
+  },
+  cardFlipped: {
+    backgroundColor: '#fff',
+  },
+  cardText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#34656D',
+    textAlign: 'center',
+  },
+  cardImage: {
+    width: '80%',
+    height: '80%',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#34656D',
+  },
+  modalText: {
+    backgroundColor: 'white',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#34656D',
+  },
+  modalButton: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#34656D',
+    borderRadius: 10,
+    padding: 15,
+    elevation: 2,
+    marginTop: 10,
+    width: 200,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#34656D',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
 });
 
 export default GameScreen;

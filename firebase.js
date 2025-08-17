@@ -1,6 +1,12 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+// firebase.js
 
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeApp } from 'firebase/app';
+import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
+
+// Vaša Firebase konfiguracija
 const firebaseConfig = {
   apiKey: "AIzaSyCCv-nithiXDcCDgj4bzbIypVVkPgVkd-A",
   authDomain: "memo-md-c6664.firebaseapp.com",
@@ -12,5 +18,14 @@ const firebaseConfig = {
   measurementId: "G-QK93EM4XDP"
 };
 
+// Inicijalizacija Firebasea
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+
+// Inicijalizirajte Auth s trajnim spremanjem
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
+const db = getFirestore(app);
+
+export { auth, db };
