@@ -62,10 +62,6 @@ const GameScreen = () => {
 
         if (userDocSnap.exists()) {
           const currentBestScore = userDocSnap.data().bestScore;
-
-          // =========================================================================
-          // Ovdje je bila greška. Dodana je logika za ažuriranje rezultata.
-          // =========================================================================
           if (currentBestScore === null || newScore < currentBestScore) {
             await updateDoc(userDocRef, {
               bestScore: newScore,

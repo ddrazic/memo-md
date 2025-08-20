@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../firebase';
 
 const StartScreen = () => {
   const [username, setUsername] = useState('Učitavanje...');
@@ -45,7 +45,7 @@ const StartScreen = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigation.replace('index'); 
+      navigation.replace('index');
     } catch (error) {
       console.error('Greška kod odjave:', error.message);
       Alert.alert('Greška kod odjave', error.message);
@@ -58,22 +58,22 @@ const StartScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Dobrodošli,{"\n"}{username}!</Text>
       <Text style={styles.subtitle}>Najbolji rezultat: {formattedBestScore}</Text>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('game')}
       >
         <Text style={styles.buttonText}>IGRAJ</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('ranking')}
       >
         <Text style={styles.buttonText}>RANG LISTA</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.buttonLogout}
         onPress={handleLogout}
       >
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     paddingTop: 50,
   },
-    buttonTextLogout: {
+  buttonTextLogout: {
     color: '#34656D',
     fontSize: 18,
     fontWeight: 'bold',

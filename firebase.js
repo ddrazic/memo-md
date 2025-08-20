@@ -3,8 +3,6 @@ import { initializeApp } from 'firebase/app';
 import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-
-// Vaša Firebase konfiguracija
 const firebaseConfig = {
   apiKey: "AIzaSyCCv-nithiXDcCDgj4bzbIypVVkPgVkd-A",
   authDomain: "memo-md-c6664.firebaseapp.com",
@@ -16,10 +14,8 @@ const firebaseConfig = {
   measurementId: "G-QK93EM4XDP"
 };
 
-// Inicijalizacija Firebasea
 const app = initializeApp(firebaseConfig);
 
-// Inicijalizirajte Auth s trajnim spremanjem
 const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
