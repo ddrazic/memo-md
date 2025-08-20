@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Dodan import za 'updateDoc'
 import { useEffect, useState } from 'react';
 import { Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../firebase';
@@ -62,6 +62,21 @@ const GameScreen = () => {
 
         if (userDocSnap.exists()) {
           const currentBestScore = userDocSnap.data().bestScore;
+
+          // =========================================================================
+          // Ovdje je bila greška. Dodana je logika za ažuriranje rezultata.
+          // =========================================================================
+          if (currentBestScore === null || newScore < currentBestScore) {
+            await updateDoc(userDocRef, {
+              bestScore: newScore,
+              timestamp: new Date()
+            });
+            console.log("Najbolji rezultat ažuriran!");
+          } else {
+            console.log("Postojeći rezultat je bolji ili isti. Nema ažuriranja.");
+          }
+        } else {
+          console.log("Korisnički dokument ne postoji.");
         }
       } catch (error) {
         console.error("Greška pri ažuriranju rezultata:", error);

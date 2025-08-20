@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "memo-md",
+    "name": "Memo",
     "slug": "memo-md",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,14 +9,19 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "jakopec.spike",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.ddrazic.memomd"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "025f8c5c-ed61-435f-8f5c-5db4841c3f93"
+      }
     }
   }
 }

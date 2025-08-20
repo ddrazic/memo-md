@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { db } from '../firebase';
 
 const RankingScreen = () => {
@@ -33,7 +33,7 @@ const RankingScreen = () => {
         setLoading(false);
       }
     };
-    
+
     fetchRanking();
   }, []);
 
@@ -56,7 +56,7 @@ const RankingScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Rang lista</Text>
-      
+
       <FlatList
         data={rankingData}
         renderItem={renderItem}
@@ -64,7 +64,7 @@ const RankingScreen = () => {
         style={styles.list}
       />
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
