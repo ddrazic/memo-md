@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore'; 
-import { auth, db } from '../firebase';
 import { useNavigation } from '@react-navigation/native';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../firebase';
 
 const LoginScreen = ({ onToggleScreen }) => {
     const [email, setEmail] = useState('');
@@ -26,14 +26,14 @@ const LoginScreen = ({ onToggleScreen }) => {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
         >
             <Text style={styles.title}>Dobrodošli u{"\n"}MEMO m.d.!</Text>
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
                     placeholder="E-pošta"
-                    placeholderTextColor="#34656d67" 
+                    placeholderTextColor="#34656d67"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -42,7 +42,7 @@ const LoginScreen = ({ onToggleScreen }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Lozinka"
-                    placeholderTextColor="#34656d67" 
+                    placeholderTextColor="#34656d67"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -90,14 +90,14 @@ const RegisterScreen = ({ onToggleScreen }) => {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
         >
             <Text style={styles.title}>Dobrodošli u{"\n"}MEMO!</Text>
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
                     placeholder="E-pošta"
-                    placeholderTextColor="#34656d67" 
+                    placeholderTextColor="#34656d67"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -106,7 +106,7 @@ const RegisterScreen = ({ onToggleScreen }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Lozinka"
-                    placeholderTextColor="#34656d67" 
+                    placeholderTextColor="#34656d67"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -114,7 +114,7 @@ const RegisterScreen = ({ onToggleScreen }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Korisničko ime"
-                    placeholderTextColor="#34656d67" 
+                    placeholderTextColor="#34656d67"
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -163,6 +163,8 @@ const styles = StyleSheet.create({
         width: '100%',
         maxWidth: 350,
         alignItems: 'center',
+        flex: 1,
+        justifyContent: 'center',
     },
     title: {
         fontSize: 32,
