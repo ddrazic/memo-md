@@ -14,12 +14,12 @@ export const updateBestScore = async (newScore) => {
         if (currentBestScore === null || newScore < currentBestScore) {
           await updateDoc(userDocRef, { bestScore: parseFloat(newScore.toFixed(2)) });
           console.log("Novi rekord uspješno ažuriran!");
-          return true; // Vraćamo true ako je rekord ažuriran
+          return true;
         }
       }
     } catch (error) {
       console.error("Greška pri ažuriranju rezultata:", error);
     }
   }
-  return false; // Vraćamo false ako nema promjene ili je došlo do greške
+  return false;
 };

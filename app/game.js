@@ -236,9 +236,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E7F2F1',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 80,
   },
   header: {
     alignSelf: 'stretch',

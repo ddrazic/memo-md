@@ -8,6 +8,7 @@
     "scheme": "memomd",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "headerShown": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "jakopec.spike",
